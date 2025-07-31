@@ -11,7 +11,7 @@ def get_semgrep_server_params() -> Dict[str, Any]:
     semgrep_app_token = os.getenv("SEMGREP_APP_TOKEN")
     return {
         "command": "uvx",
-        "args": ["semgrep-mcp"],
+        "args": ["--with", "mcp==1.12.2", "semgrep-mcp"],
         "env": {"SEMGREP_APP_TOKEN": semgrep_app_token},
     }
 

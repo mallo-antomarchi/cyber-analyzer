@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from typing import List
 from dotenv import load_dotenv
@@ -100,10 +101,14 @@ async def analyze_code(request: AnalyzeRequest) -> SecurityReport:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
-@app.get("/")
-async def root():
+@app.get("/health")
+async def health():
     """Health check endpoint."""
     return {"message": "Cybersecurity Analyzer API"}
+
+# Mount static files for frontend
+if os.path.exists("static"):
+    app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 
 if __name__ == "__main__":
