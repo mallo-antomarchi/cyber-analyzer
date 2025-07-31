@@ -5,7 +5,13 @@ import { AnalysisResponse } from '@/types/security';
 import CodeInput from '@/components/CodeInput';
 import AnalysisResults from '@/components/AnalysisResults';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Force relative URLs in production builds
+// Only use localhost when explicitly running in development mode
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && window.location?.hostname === 'localhost' 
+    ? 'http://localhost:8000' 
+    : '');
+
 
 /**
  * Main application page for cybersecurity code analysis

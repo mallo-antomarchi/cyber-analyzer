@@ -14,9 +14,19 @@ load_dotenv()
 
 app = FastAPI(title="Cybersecurity Analyzer API")
 
+# Configure CORS for development and production
+cors_origins = [
+    "http://localhost:3000",    # Local development
+    "http://frontend:3000",     # Docker development
+]
+
+# In production, allow same-origin requests (static files served from same domain)
+if os.getenv("ENVIRONMENT") == "production":
+    cors_origins.append("*")  # Allow all origins in production since we serve frontend from same domain
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://frontend:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
