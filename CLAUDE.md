@@ -129,7 +129,16 @@ docker stop cyber-analyzer
 - ✅ **Docker image optimized** - Multi-stage build with ARM64→AMD64 cross-compilation for cloud compatibility
 - ✅ **Terraform deployment pipeline** - Working infrastructure-as-code setup with Azure workspace
 - ✅ **CORS and API routing resolved** - Frontend uses relative URLs in production, localhost in development
-- ⚠️ **Known issue**: MCP server (Semgrep) experiencing 120s timeouts - needs investigation
+- ⚠️ **CRITICAL ISSUE**: MCP server timeout on Azure Container Apps
+
+### MCP Server Memory Issue - RESOLVED (July 31, 2025)
+**Issue**: Semgrep MCP server was getting SIGKILL (-9) on Azure when loading rule registry
+- `list_tools` worked but `semgrep_scan` failed with exit code -9
+- Process killed right after "Loading rules from registry..."
+- **Root cause**: Insufficient memory allocation (1.0Gi) 
+- **Solution**: Increased container memory from 1.0Gi to 2.0Gi and CPU from 0.5 to 1.0
+
+**Key lesson**: Semgrep rule registry loading is memory-intensive and requires at least 2GB RAM in cloud environments
 
 ### Key Deployment Lessons Learned
 1. **Terraform Docker Provider Limitations**: 

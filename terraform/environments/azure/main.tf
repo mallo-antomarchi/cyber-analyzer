@@ -102,8 +102,8 @@ resource "azurerm_container_app" "main" {
     container {
       name   = "main"
       image  = docker_registry_image.app.name
-      cpu    = 0.25
-      memory = "0.5Gi"
+      cpu    = 1.0
+      memory = "2.0Gi"
 
       env {
         name  = "OPENAI_API_KEY"
@@ -118,6 +118,12 @@ resource "azurerm_container_app" "main" {
       env {
         name  = "ENVIRONMENT"
         value = "production"
+      }
+
+
+      env {
+        name  = "PYTHONUNBUFFERED"
+        value = "1"
       }
     }
 
@@ -154,7 +160,7 @@ resource "azurerm_container_app" "main" {
 
 # Outputs
 output "app_url" {
-  value       = "https://${azurerm_container_app.main.latest_revision_fqdn}"
+  value       = "https://${azurerm_container_app.main.ingress[0].fqdn}"
   description = "URL of the deployed application"
 }
 

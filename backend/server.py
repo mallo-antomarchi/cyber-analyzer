@@ -116,6 +116,72 @@ async def health():
     """Health check endpoint."""
     return {"message": "Cybersecurity Analyzer API"}
 
+@app.get("/network-test")
+async def network_test():
+    """Test network connectivity to Semgrep API."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get("https://semgrep.dev/api/v1/")
+            return {
+                "semgrep_api_reachable": True,
+                "status_code": response.status_code,
+                "response_size": len(response.content)
+            }
+    except Exception as e:
+        return {
+            "semgrep_api_reachable": False,
+            "error": str(e)
+        }
+
+@app.get("/semgrep-test")
+async def semgrep_test():
+    """Test if semgrep CLI can be installed and run."""
+    import subprocess
+    import tempfile
+    import os
+    
+    try:
+        # Test if we can install semgrep via pip
+        result = subprocess.run(
+            ["pip", "install", "semgrep"], 
+            capture_output=True, 
+            text=True, 
+            timeout=60
+        )
+        
+        if result.returncode != 0:
+            return {
+                "semgrep_install": False,
+                "error": f"Install failed: {result.stderr}"
+            }
+        
+        # Test if semgrep --version works
+        version_result = subprocess.run(
+            ["semgrep", "--version"], 
+            capture_output=True, 
+            text=True, 
+            timeout=30
+        )
+        
+        return {
+            "semgrep_install": True,
+            "version_check": version_result.returncode == 0,
+            "version_output": version_result.stdout,
+            "version_error": version_result.stderr
+        }
+        
+    except subprocess.TimeoutExpired:
+        return {
+            "semgrep_install": False,
+            "error": "Timeout during semgrep installation or version check"
+        }
+    except Exception as e:
+        return {
+            "semgrep_install": False,
+            "error": str(e)
+        }
+
 # Mount static files for frontend
 if os.path.exists("static"):
     app.mount("/", StaticFiles(directory="static", html=True), name="static")

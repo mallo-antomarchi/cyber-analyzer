@@ -9,10 +9,21 @@ from agents.mcp import MCPServerStdio, create_static_tool_filter
 def get_semgrep_server_params() -> Dict[str, Any]:
     """Get configuration parameters for the Semgrep MCP server."""
     semgrep_app_token = os.getenv("SEMGREP_APP_TOKEN")
+    
+    # Enhanced environment for debugging
+    env = {
+        "SEMGREP_APP_TOKEN": semgrep_app_token,
+        "PYTHONUNBUFFERED": "1",  # Ensure output is not buffered
+    }
+    
     return {
         "command": "uvx",
-        "args": ["--with", "mcp==1.12.2", "semgrep-mcp"],
-        "env": {"SEMGREP_APP_TOKEN": semgrep_app_token},
+        "args": [
+            "--with", "mcp==1.12.2", 
+            "--quiet",  # Reduce uvx output noise
+            "semgrep-mcp"
+        ],
+        "env": env,
     }
 
 def create_semgrep_server() -> MCPServerStdio:
