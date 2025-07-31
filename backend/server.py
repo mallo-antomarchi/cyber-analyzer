@@ -1,69 +1,98 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+import os
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 from typing import List
+from dotenv import load_dotenv
+from agents import Agent, Runner
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI(title="Cybersecurity Analyzer API")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://frontend:3000"],  # Frontend origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class AnalyzeRequest(BaseModel):
     code: str
 
 class SecurityIssue(BaseModel):
-    title: str
-    description: str
-    code: str
-    fix: str
-    cvss_score: float
-    severity: str  # "critical", "high", "medium", "low"
+    title: str = Field(description="Brief title of the security vulnerability")
+    description: str = Field(description="Detailed description of the security issue and its potential impact")
+    code: str = Field(description="The specific vulnerable code snippet that demonstrates the issue")
+    fix: str = Field(description="Recommended code fix or mitigation strategy")
+    cvss_score: float = Field(description="CVSS score from 0.0 to 10.0 representing severity")
+    severity: str = Field(description="Severity level: critical, high, medium, or low")
 
-class AnalysisResponse(BaseModel):
-    summary: str
-    issues: List[SecurityIssue]
+class SecurityReport(BaseModel):
+    summary: str = Field(description="Executive summary of the security analysis")
+    issues: List[SecurityIssue] = Field(description="List of identified security vulnerabilities")
 
-@app.post("/api/analyze", response_model=AnalysisResponse)
+@app.post("/api/analyze", response_model=SecurityReport)
 async def analyze_code(request: AnalyzeRequest):
     """
-    Analyze Python code for security vulnerabilities.
+    Analyze Python code for security vulnerabilities using OpenAI Agents.
     """
-    # Hardcoded response for now
-    hardcoded_issues = [
-        SecurityIssue(
-            title="SQL Injection Vulnerability",
-            description="Direct string concatenation in SQL query allows for SQL injection attacks.",
-            code="cursor.execute(f\"SELECT * FROM users WHERE id = {user_id}\")",
-            fix="Use parameterized queries: cursor.execute(\"SELECT * FROM users WHERE id = %s\", (user_id,))",
-            cvss_score=9.1,
-            severity="critical"
-        ),
-        SecurityIssue(
-            title="Hardcoded Secret",
-            description="API key is hardcoded in the source code, exposing sensitive credentials.",
-            code="API_KEY = \"sk-1234567890abcdef\"",
-            fix="Store secrets in environment variables: API_KEY = os.getenv('API_KEY')",
-            cvss_score=7.5,
-            severity="high"
-        ),
-        SecurityIssue(
-            title="Insecure Random Generator",
-            description="Using predictable random number generator for security-sensitive operations.",
-            code="import random\ntoken = random.randint(1000, 9999)",
-            fix="Use cryptographically secure random: import secrets\ntoken = secrets.randbelow(9000) + 1000",
-            cvss_score=5.3,
-            severity="medium"
-        ),
-        SecurityIssue(
-            title="Missing Input Validation",
-            description="User input is not validated before processing, potentially allowing malicious data.",
-            code="user_input = request.form['data']\nprocess_data(user_input)",
-            fix="Validate input: if user_input and len(user_input) < 100 and user_input.isalnum(): process_data(user_input)",
-            cvss_score=4.2,
-            severity="low"
-        )
-    ]
+    if not request.code.strip():
+        raise HTTPException(status_code=400, detail="No code provided for analysis")
     
-    return AnalysisResponse(
-        summary=f"Analyzed {len(request.code)} characters of Python code. Found {len(hardcoded_issues)} security issues requiring attention. Critical vulnerabilities detected that need immediate remediation.",
-        issues=hardcoded_issues
-    )
+    # Check for OpenAI API key
+    if not os.getenv("OPENAI_API_KEY"):
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+    
+    try:
+        # Create security researcher agent
+        instructions = """
+        You are a cybersecurity researcher. You are given Python code to analyze.
+        You analyze it for security vulnerabilities and provide detailed findings.
+        Include all severity levels: critical, high, medium, and low vulnerabilities.
+        
+        For each vulnerability found, provide:
+        - A clear title
+        - Detailed description of the security issue and potential impact
+        - The specific vulnerable code snippet
+        - Recommended fix or mitigation
+        - CVSS score (0.0-10.0)
+        - Severity level (critical/high/medium/low)
+        
+        Be thorough but practical in your analysis.
+        """
+        
+        agent = Agent(
+            name="Security Researcher", 
+            instructions=instructions, 
+            model="gpt-4o-mini", 
+            output_type=SecurityReport
+        )
+        
+        # Get first 20 characters for verification
+        code_preview = request.code[:20] if request.code else ""
+        
+        # Run the security analysis
+        result = await Runner.run(
+            agent, 
+            input=f"Please analyze the following Python code for security vulnerabilities:\n\n{request.code}"
+        )
+        
+        report = result.final_output_as(SecurityReport)
+        
+        # Add code preview to summary for testing roundtrip
+        enhanced_summary = f"Analyzed {len(request.code)} characters of Python code (starting with: '{code_preview}'). {report.summary}"
+        
+        return SecurityReport(
+            summary=enhanced_summary,
+            issues=report.issues
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @app.get("/")
 async def root():
