@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List
 from dotenv import load_dotenv
-from agents import Agent, Runner
+from agents import Agent, Runner, trace
+from agents.mcp import MCPServerStdio
 
 # Load environment variables
 load_dotenv()
@@ -48,13 +49,30 @@ async def analyze_code(request: AnalyzeRequest):
         raise HTTPException(status_code=500, detail="OpenAI API key not configured")
     
     try:
-        # Create security researcher agent
+        # Get Semgrep app token
+        semgrep_app_token = os.getenv("SEMGREP_APP_TOKEN")
+        semgrep_params = {
+            "command": "uvx",
+            "args": ["semgrep-mcp"],
+            "env": {
+                "SEMGREP_APP_TOKEN": semgrep_app_token
+            }
+        }
+        
+        # Create security researcher agent with enhanced instructions
         instructions = """
         You are a cybersecurity researcher. You are given Python code to analyze.
-        You analyze it for security vulnerabilities and provide detailed findings.
+        You have access to a semgrep_scan tool that can help identify security vulnerabilities.
+        
+        Your analysis process should be:
+        1. First, use the semgrep_scan tool to scan the provided code for known vulnerability patterns
+        2. Review and analyze the semgrep results
+        3. Conduct your own additional security analysis to identify issues that semgrep might have missed
+        4. Combine both semgrep findings and your own analysis into a comprehensive report
+        
         Include all severity levels: critical, high, medium, and low vulnerabilities.
         
-        For each vulnerability found, provide:
+        For each vulnerability found (from both semgrep and your own analysis), provide:
         - A clear title
         - Detailed description of the security issue and potential impact
         - The specific vulnerable code snippet
@@ -62,24 +80,29 @@ async def analyze_code(request: AnalyzeRequest):
         - CVSS score (0.0-10.0)
         - Severity level (critical/high/medium/low)
         
-        Be thorough but practical in your analysis.
+        Be thorough and practical in your analysis. Don't duplicate issues between semgrep results and your own findings.
         """
-        
-        agent = Agent(
-            name="Security Researcher", 
-            instructions=instructions, 
-            model="gpt-4o-mini", 
-            output_type=SecurityReport
-        )
         
         # Get first 20 characters for verification
         code_preview = request.code[:20] if request.code else ""
         
-        # Run the security analysis
-        result = await Runner.run(
-            agent, 
-            input=f"Please analyze the following Python code for security vulnerabilities:\n\n{request.code}"
-        )
+        # Set up MCP server and run analysis
+        with trace("Security Researcher"):
+            async with MCPServerStdio(params=semgrep_params, client_session_timeout_seconds=120) as semgrep:
+                agent = Agent(
+                    name="Security Researcher", 
+                    instructions=instructions, 
+                    model="gpt-4o-mini", 
+                    mcp_servers=[semgrep],
+                    mcp_config={"allowed_tools": ["semgrep_scan"]},
+                    output_type=SecurityReport
+                )
+                
+                # Run the security analysis
+                result = await Runner.run(
+                    agent, 
+                    input=f"Please analyze the following Python code for security vulnerabilities:\n\n{request.code}"
+                )
         
         report = result.final_output_as(SecurityReport)
         
