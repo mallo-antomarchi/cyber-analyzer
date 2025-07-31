@@ -222,6 +222,11 @@ Internet → Container App → Your Docker Image
       Container Registry (image storage)
 ```
 
+### Resource Configuration:
+- **CPU**: 1.0 vCPU (required for Semgrep processing)
+- **Memory**: 2.0Gi (required for Semgrep rule registry loading)
+- **Important**: Lower memory settings will cause Semgrep to fail with SIGKILL
+
 ### Scaling:
 - **Min replicas**: 0 (scales to zero when not used = $0)
 - **Max replicas**: 1 (keeps costs minimal)
