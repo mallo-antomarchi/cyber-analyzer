@@ -1,5 +1,13 @@
 # Project Context for Claude Code
 
+## Overall context
+- This is a project being developed as part of Ed's course "AI in Production"
+- Ed is writing this code which thousands of students will clone; they will then follow the steps to deploy
+- Students may be on Windows PC, Mac or Linux; the instructions needs to work on all systems
+- This project is called Cybersecurity Analyzer - it runs an Agent
+- The project will be deployed locally with npm and uv run (working), also locally as a single Docker container (working), to Azure Container App (working), and to GCP Cloud Run (not started)
+- The project root is ~/projects/cyber
+
 ## Project Overview
 Cybersecurity Analyzer - A web application for analyzing Python code for security vulnerabilities using AI-powered analysis with OpenAI and Semgrep.
 
