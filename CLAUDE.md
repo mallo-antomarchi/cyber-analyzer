@@ -7,6 +7,7 @@
 - This project is called Cybersecurity Analyzer - it runs an Agent
 - The project will be deployed locally with npm and uv run (working), also locally as a single Docker container (working), to Azure Container App (working), and to GCP Cloud Run (not started)
 - The project root is ~/projects/cyber
+- There is a .env file in the project root; you may not be able to see it for security reasons, but it's there, with OPENAI_API_KEY and SEMGREP_APP_TOKEN
 
 ## Project Overview
 Cybersecurity Analyzer - A web application for analyzing Python code for security vulnerabilities using AI-powered analysis with OpenAI and Semgrep.
