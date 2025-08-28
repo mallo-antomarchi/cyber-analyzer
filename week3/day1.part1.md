@@ -1,6 +1,10 @@
-# Azure Setup Guide for First-Time Users
+# Day 1 Part 1: Azure Setup Guide
 
 This guide will walk you through setting up your Azure account and preparing it for deploying containerized applications. All instructions work for both Windows and Mac users.
+
+If you haven't already cloned the cyber repo, please do that now:
+
+`git clone https://github.com/ed-donner/cyber.git`
 
 ## Table of Contents
 1. [Creating Your Azure Account](#creating-your-azure-account)

@@ -1,10 +1,10 @@
-# Azure Deployment Guide
+# Day 1 Part 2: Azure Deployment
 
 This guide will deploy the Cybersecurity Analyzer to Azure Container Apps using Terraform. The deployment will automatically build your Docker image, push it to Azure Container Registry, and deploy it as a serverless container application.
 
 ## Prerequisites
 
-✅ Complete the [Azure Setup Guide](./setup_azure.md) first
+✅ Complete Day 1 Part 1 first
 ✅ Terraform CLI installed (covered in previous course modules)
 ✅ Docker running locally
 ✅ `.env` file in project root with your API keys

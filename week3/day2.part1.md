@@ -1,4 +1,4 @@
-# Google Cloud Platform Setup Guide for First-Time Users
+# Day 2 Part 1: Google Cloud Platform Setup Guide
 
 This guide will walk you through setting up your Google Cloud Platform (GCP) account and preparing it for deploying containerized applications. All instructions work for Windows, Mac, and Linux users.
 

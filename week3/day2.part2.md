@@ -1,4 +1,4 @@
-# Google Cloud Platform Deployment Guide
+# Day 2 Part 2: Google Cloud Platform
 
 This guide will deploy the Cybersecurity Analyzer to Google Cloud Run using Terraform. The deployment will automatically build your Docker image, push it to Google Container Registry, and deploy it as a serverless container application.
 
