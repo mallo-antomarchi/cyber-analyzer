@@ -85,7 +85,7 @@ Write-Host "Semgrep token loaded: $($env:SEMGREP_APP_TOKEN.Substring(0,8))..."
 Navigate to the GCP Terraform configuration:
 
 ```bash
-cd terraform/environments/gcp
+cd terraform/gcp
 ```
 
 Initialize Terraform and create a GCP workspace:
@@ -324,7 +324,7 @@ gcloud container images delete gcr.io/$TF_VAR_project_id/cyber-analyzer --quiet
 
 ### "Failed to build Docker image"
 - Make sure Docker is running: `docker ps`
-- Ensure you're in the correct directory: `terraform/environments/gcp`
+- Ensure you're in the correct directory: `terraform/gcp`
 - Check Docker has enough disk space: `docker system df`
 
 ### "Permission denied" or API errors

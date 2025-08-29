@@ -58,7 +58,7 @@ Write-Host "Semgrep token loaded: $($env:SEMGREP_APP_TOKEN.Substring(0,8))..."
 Navigate to the Azure Terraform configuration:
 
 ```bash
-cd terraform/environments/azure
+cd terraform/azure
 ```
 
 Initialize Terraform and create an Azure workspace:
@@ -92,6 +92,10 @@ az account show --output table
 ```
 
 Make sure the subscription shown matches what you set up in the Azure setup guide.
+
+### Understanding Resource Providers
+
+In Azure, resource providers are services that supply Azure resources. Think of them as Azure's way of organizing and enabling different cloud services. This is somewhat similar to enabling AWS services or APIs, but with a key difference: in AWS, most services are automatically available once you have the right IAM permissions. In Azure, you need to explicitly register resource providers before you can create resources of that type in your subscription. It's a one-time setup that tells Azure "I want to be able to use Container Apps and Log Analytics in this subscription." This registration is free and just enables the capability - you only pay when you actually create resources.
 
 Now register the required Azure resource providers (one-time setup):
 
@@ -202,6 +206,83 @@ az containerapp logs show \
   --resource-group cyber-analyzer-rg \
   --follow
 ```
+
+### Check Costs Incurred
+It's good practice to check your costs regularly. In the Azure Portal:
+1. Search for **"Cost Management"** in the top search bar
+2. Click **"Cost analysis"** in the left menu
+3. Set the scope to your subscription
+4. Look at **"Accumulated costs"** for the current billing period
+5. Filter by resource group `cyber-analyzer-rg` to see costs for this project
+
+For the command line:
+```bash
+# Check current usage (may take a few hours to update)
+az consumption usage list \
+  --start-date $(date -u -d '7 days ago' '+%Y-%m-%d') \
+  --end-date $(date -u '+%Y-%m-%d') \
+  --query "[?contains(instanceId, 'cyber-analyzer')].{Resource:instanceName, Cost:pretaxCost, Currency:currency}" \
+  --output table
+```
+
+**Note**: Azure costs can take 24-48 hours to appear. Container Apps charges are minimal when idle but check regularly to avoid surprises.
+
+---
+
+## Step 7: Clean Up Resources (Important!)
+
+When you're done experimenting with Azure deployment, it's crucial to destroy all resources to avoid ongoing charges. Container Apps can generate costs even when idle, so always clean up after your learning sessions.
+
+### Destroy All Azure Resources
+
+Run this command from the `terraform/azure` directory:
+
+```bash
+# Destroy all resources created by Terraform
+terraform destroy \
+  -var="openai_api_key=$OPENAI_API_KEY" \
+  -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
+```
+
+Terraform will show you what will be destroyed. Review the list and type `yes` when prompted.
+
+This will remove:
+- The Container App (cyber-analyzer)
+- The Container App Environment  
+- The Container Registry and all images
+- The Log Analytics workspace
+- All associated configurations
+
+### Verify Cleanup
+
+After destruction completes:
+
+1. **In Azure Portal**: 
+   - Go to your resource group `cyber-analyzer-rg`
+   - It should be empty or show "No resources to display"
+
+2. **Via CLI**:
+```bash
+# List resources in the resource group (should be empty)
+az resource list --resource-group cyber-analyzer-rg --output table
+```
+
+3. **Double-check Container Registry**:
+```bash
+# Ensure the registry is gone (should error)
+az acr show --name cyberanalyzeracr --resource-group cyber-analyzer-rg
+```
+
+### Keep the Resource Group
+
+You can keep the empty resource group for future deployments - it costs nothing. If you want to remove it too:
+
+```bash
+# Optional: Delete the resource group entirely
+az group delete --name cyber-analyzer-rg --yes
+```
+
+**💡 Pro Tip**: Always run `terraform destroy` at the end of each lab session. You can easily redeploy later with `terraform apply` when you need it again.
 
 ---
 
