@@ -51,7 +51,7 @@ resource "docker_image" "app" {
   name = "${azurerm_container_registry.acr.login_server}/${var.project_name}:${var.docker_image_tag}"
   
   build {
-    context    = "${path.module}/../../../"
+    context    = "${path.module}/../.."
     dockerfile = "Dockerfile"
     platform   = "linux/amd64"
     no_cache   = true

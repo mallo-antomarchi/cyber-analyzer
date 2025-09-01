@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -21,17 +21,17 @@ provider "google" {
 
 # Enable required APIs
 resource "google_project_service" "cloudrun" {
-  service = "run.googleapis.com"
+  service            = "run.googleapis.com"
   disable_on_destroy = false
 }
 
 resource "google_project_service" "containerregistry" {
-  service = "containerregistry.googleapis.com"
+  service            = "containerregistry.googleapis.com"
   disable_on_destroy = false
 }
 
 resource "google_project_service" "cloudbuild" {
-  service = "cloudbuild.googleapis.com"
+  service            = "cloudbuild.googleapis.com"
   disable_on_destroy = false
 }
 
@@ -50,9 +50,9 @@ data "google_client_config" "default" {}
 # Build and push Docker image to GCR
 resource "docker_image" "app" {
   name = "gcr.io/${var.project_id}/${var.service_name}:${var.docker_image_tag}"
-  
+
   build {
-    context    = "${path.module}/../../../"
+    context    = "${path.module}/../.."
     dockerfile = "Dockerfile"
     platform   = "linux/amd64"
     no_cache   = true
@@ -76,11 +76,11 @@ resource "google_cloud_run_service" "app" {
     spec {
       containers {
         image = docker_image.app.name
-        
+
         resources {
           limits = {
             cpu    = "1"
-            memory = "2Gi"  # 2GB required for Semgrep MCP server
+            memory = "2Gi" # 2GB required for Semgrep MCP server
           }
         }
 

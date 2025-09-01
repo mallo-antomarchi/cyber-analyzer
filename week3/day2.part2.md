@@ -234,6 +234,66 @@ gcloud alpha run services logs tail cyber-analyzer \
 
 ---
 
+## Step 8: Clean Up Resources (Important!)
+
+When you're done experimenting with GCP deployment, it's crucial to destroy all resources to avoid ongoing charges. Cloud Run has minimal idle costs, but Container Registry storage and any active traffic will incur charges.
+
+### Destroy All GCP Resources
+
+Run this command from the `terraform/gcp` directory (all on one line):
+
+```bash
+terraform destroy -var="openai_api_key=$OPENAI_API_KEY" -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
+```
+
+Terraform will show you what will be destroyed. Review the list and type `yes` when prompted.
+
+This will remove:
+- The Cloud Run service (cyber-analyzer)
+- The Docker image from Container Registry
+- All associated IAM policies and configurations
+
+### Verify Cleanup in Console
+
+After destruction completes, verify everything is cleaned up:
+
+1. **In Google Cloud Console** (https://console.cloud.google.com):
+   - Navigate to **Cloud Run** in the menu
+   - Your `cyber-analyzer` service should be gone
+   - Navigate to **Container Registry** → **Images**
+   - The `cyber-analyzer` image should be removed
+
+2. **Via CLI**:
+```bash
+# Check Cloud Run services (should be empty or not show cyber-analyzer)
+gcloud run services list --region=us-central1
+
+# Check Container Registry images (should not show cyber-analyzer)
+gcloud container images list
+```
+
+3. **Double-check specific resources**:
+```bash
+# This should return an error saying the service doesn't exist
+gcloud run services describe cyber-analyzer --region=us-central1
+```
+
+### Optional: Clean Up Remaining Registry Storage
+
+If any container images remain in the registry:
+
+```bash
+# List all images
+gcloud container images list
+
+# Delete specific image if it still exists
+gcloud container images delete gcr.io/$TF_VAR_project_id/cyber-analyzer --quiet --force-delete-tags
+```
+
+**💡 Pro Tip**: Always run `terraform destroy` at the end of each lab session. You can easily redeploy later with `terraform apply` when you need it again. Cloud Run charges are minimal when idle, but it's good practice to clean up learning resources.
+
+---
+
 ## Understanding What Was Created
 
 ### Cost Breakdown (mostly free tier):
