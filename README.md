@@ -1,76 +1,23 @@
-# Cybersecurity Analyzer
+# Cyber-Security Agent
 
-A web application for analyzing Python code for security vulnerabilities using AI-powered analysis with OpenAI and Semgrep.
+## A Code Analyzer via Semgrep MCP server for Azure and GCP
 
-## Prerequisites
+![Course Image](assets/cyber.png)
 
-- Node.js 20+
-- Python 3.12+
-- Docker (for containerized deployment)
-- Environment variables in `.env` file:
-  - `OPENAI_API_KEY`
-  - `SEMGREP_APP_TOKEN`
+_If you're looking at this in Cursor, please right click on the filename in the Explorer on the left, and select "Open preview", to view it in formatted glory._
 
-## Running Locally
+### Welcome to the Week 3 Days 1 and 2 project..
 
-### Start the Backend Server
+Please clone this repo:
 
 ```bash
-cd backend
-uv run server.py
+git clone https://github.com/ed-donner/cyber.git
 ```
 
-The backend API will be available at http://localhost:8000
+Then open this as a project in Cursor; then head into the week3 directory and start with guide "day1.part0" - right click and select "Open Preview".
 
-### Start the Frontend Development Server
+#### Keep in mind
 
-In a new terminal:
-
-```bash
-cd frontend
-npm run dev
-```
-
-The frontend will be available at http://localhost:3000
-
-### Stopping the Servers
-
-- Backend: Press `Ctrl+C` in the backend terminal
-- Frontend: Press `Ctrl+C` in the frontend terminal
-
-## Running with Docker
-
-### Build the Docker Image
-
-```bash
-docker build -t cyber-analyzer .
-```
-
-### Run the Container
-
-```bash
-docker run --rm -d --name cyber-analyzer -p 8000:8000 --env-file .env cyber-analyzer
-```
-
-The application will be available at http://localhost:8000
-
-### View Container Logs
-
-```bash
-docker logs cyber-analyzer
-```
-
-### Stop the Container
-
-```bash
-docker stop cyber-analyzer
-```
-
-## Deployment
-
-The Docker image is optimized for deployment on:
-- Google Cloud Run
-- Azure Container Instances
-- Any container platform that supports Docker
-
-The application exposes port 8000 and includes a health check endpoint at `/health`.
+- Please submit your community_contributions, including links to your repos, in the production repo community_contributions folder
+- Regularly do a git pull to get the latest code
+- Reach out in Udemy or email (ed@edwarddonner.com) if I can help!

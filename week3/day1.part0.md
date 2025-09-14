@@ -24,7 +24,6 @@ If you haven't already cloned the repository, do so now:
 
 ```bash
 git clone https://github.com/ed-donner/cyber.git
-cd cyber
 ```
 
 ### Open in Cursor
