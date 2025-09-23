@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -10,12 +10,30 @@ terraform {
       source  = "kreuzwerker/docker"
       version = "~> 3.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
 }
 
 # Configure Azure Provider
 provider "azurerm" {
   features {}
+}
+
+# Add a random acr_suffix to the acr name to make it globally unique.
+resource "random_string" "acr_suffix" {
+  length  = 6
+  upper   = false
+  lower   = true
+  numeric = true
+  special = false
+}
+locals {
+  acr_basename = replace(var.project_name, "-", "") // only letters/numbers
+  // keep base to <= 40 so base+6 <= 46 (under 50 char limit)
+  acr_name     = "${substr(local.acr_basename, 0, 40)}${random_string.acr_suffix.result}"
 }
 
 # Use existing resource group
@@ -25,7 +43,7 @@ data "azurerm_resource_group" "main" {
 
 # Create Azure Container Registry
 resource "azurerm_container_registry" "acr" {
-  name                = replace("${var.project_name}acr", "-", "")
+  name                = local.acr_name
   resource_group_name = data.azurerm_resource_group.main.name
   location            = data.azurerm_resource_group.main.location
   sku                 = "Basic"
