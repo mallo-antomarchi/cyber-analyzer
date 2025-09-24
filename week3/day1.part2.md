@@ -135,11 +135,19 @@ Review the plan output. You should see:
 
 If everything looks good, apply the changes:
 
+Om a Mac / Linux:
+
 ```bash
 # Deploy everything
 terraform apply \
   -var="openai_api_key=$OPENAI_API_KEY" \
   -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
+```
+
+On PC in Powershell:
+
+```powershell
+terraform apply -var ("openai_api_key=" + $Env:OPENAI_API_KEY) -var ("semgrep_app_token=" + $Env:SEMGREP_APP_TOKEN)
 ```
 
 Type `yes` when prompted. This will take 5-10 minutes as it:
@@ -155,12 +163,9 @@ Type `yes` when prompted. This will take 5-10 minutes as it:
 # Force rebuild of Docker image when code changes
 terraform taint docker_image.app
 terraform taint docker_registry_image.app
-
-# Then redeploy
-terraform apply \
-  -var="openai_api_key=$OPENAI_API_KEY" \
-  -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
 ```
+
+Then redeploy using the terraform apply commands in the prior section.
 
 ---
 
@@ -201,10 +206,7 @@ In the Azure Portal (https://portal.azure.com):
 ### Monitor Logs
 ```bash
 # View application logs
-az containerapp logs show \
-  --name cyber-analyzer \
-  --resource-group cyber-analyzer-rg \
-  --follow
+az containerapp logs show --name cyber-analyzer --resource-group cyber-analyzer-rg --follow
 ```
 
 ### Check Costs Incurred
@@ -237,11 +239,19 @@ When you're done experimenting with Azure deployment, it's crucial to destroy al
 
 Run this command from the `terraform/azure` directory:
 
+For a Mac/Linux:
+
 ```bash
 # Destroy all resources created by Terraform
 terraform destroy \
   -var="openai_api_key=$OPENAI_API_KEY" \
   -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
+```
+
+For a PC:
+
+```powershell
+terraform destroy -var ("openai_api_key=" + $Env:OPENAI_API_KEY) -var ("semgrep_app_token=" + $Env:SEMGREP_APP_TOKEN)
 ```
 
 Terraform will show you what will be destroyed. Review the list and type `yes` when prompted.

@@ -140,12 +140,21 @@ Make sure the project shown matches your PROJECT_ID.
 
 Now let's deploy everything with a single command:
 
+On a Mac/Linux:
+
 ```bash
 # Plan the deployment (see what will be created)
 terraform plan \
   -var="openai_api_key=$OPENAI_API_KEY" \
   -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
 ```
+
+On PC:
+
+```powershell
+terraform plan -var ("openai_api_key=" + $Env:OPENAI_API_KEY) -var ("semgrep_app_token=" + $Env:SEMGREP_APP_TOKEN)
+```
+
 
 Review the plan output. You should see:
 - ✅ Enable Cloud Run API
@@ -157,12 +166,21 @@ Review the plan output. You should see:
 
 If everything looks good, apply the changes:
 
+On a Mac/Linux:
+
 ```bash
 # Deploy everything
 terraform apply \
   -var="openai_api_key=$OPENAI_API_KEY" \
   -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
 ```
+
+On a PC:
+
+```powershell
+terraform apply -var ("openai_api_key=" + $Env:OPENAI_API_KEY) -var ("semgrep_app_token=" + $Env:SEMGREP_APP_TOKEN)
+```
+
 
 Type `yes` when prompted. This will take 5-10 minutes as it:
 1. Enables required Google Cloud APIs
@@ -178,12 +196,7 @@ Type `yes` when prompted. This will take 5-10 minutes as it:
 terraform taint docker_image.app
 terraform taint docker_registry_image.app
 
-# Then redeploy
-terraform apply \
-  -var="openai_api_key=$OPENAI_API_KEY" \
-  -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
-```
-
+# Then redeploy using the commands from the prior step
 ---
 
 ## Step 6: Get Your Application URL
@@ -242,8 +255,17 @@ When you're done experimenting with GCP deployment, it's crucial to destroy all 
 
 Run this command from the `terraform/gcp` directory (all on one line):
 
+Mac/Linux:
+
 ```bash
 terraform destroy -var="openai_api_key=$OPENAI_API_KEY" -var="semgrep_app_token=$SEMGREP_APP_TOKEN"
+```
+
+PC:
+
+
+```powershell
+terraform destroy -var ("openai_api_key=" + $Env:OPENAI_API_KEY) -var ("semgrep_app_token=" + $Env:SEMGREP_APP_TOKEN)
 ```
 
 Terraform will show you what will be destroyed. Review the list and type `yes` when prompted.
