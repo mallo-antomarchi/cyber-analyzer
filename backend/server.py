@@ -1,7 +1,8 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import List
 from dotenv import load_dotenv
@@ -13,6 +14,7 @@ from mcp_servers import create_semgrep_server
 load_dotenv()
 
 app = FastAPI(title="Cybersecurity Analyzer API")
+api_router = APIRouter()
 
 # Configure CORS for development and production
 cors_origins = [
@@ -93,7 +95,7 @@ def format_analysis_response(code: str, report: SecurityReport) -> SecurityRepor
     return SecurityReport(summary=enhanced_summary, issues=report.issues)
 
 
-@app.post("/api/analyze", response_model=SecurityReport)
+@api_router.post("/analyze", response_model=SecurityReport)
 async def analyze_code(request: AnalyzeRequest) -> SecurityReport:
     """
     Analyze Python code for security vulnerabilities using OpenAI Agents and Semgrep.
@@ -108,15 +110,57 @@ async def analyze_code(request: AnalyzeRequest) -> SecurityReport:
         report = await run_security_analysis(request.code)
         return format_analysis_response(request.code, report)
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"ERROR in analyze_code: {error_details}")  # Log to console
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 
-@app.get("/health")
+@api_router.get("/health")
 async def health():
     """Health check endpoint."""
     return {"message": "Cybersecurity Analyzer API"}
 
-@app.get("/network-test")
+@api_router.get("/debug")
+async def debug():
+    """Debug endpoint to check imports and dependencies."""
+    import sys
+    import subprocess
+    
+    results = {
+        "python_version": sys.version,
+        "python_path": sys.executable,
+    }
+    
+    # Check if uvx is available
+    try:
+        uvx_result = subprocess.run(["which", "uvx"], capture_output=True, text=True, timeout=5)
+        results["uvx_available"] = uvx_result.returncode == 0
+        results["uvx_path"] = uvx_result.stdout.strip()
+    except Exception as e:
+        results["uvx_check_error"] = str(e)
+    
+    # Check if we can import agents
+    try:
+        import agents
+        results["agents_imported"] = True
+        results["agents_version"] = getattr(agents, "__version__", "unknown")
+    except Exception as e:
+        results["agents_import_error"] = str(e)
+        import traceback
+        results["agents_import_traceback"] = traceback.format_exc()
+    
+    # Check if we can import mcp
+    try:
+        import mcp
+        results["mcp_imported"] = True
+        results["mcp_version"] = getattr(mcp, "__version__", "unknown")
+    except Exception as e:
+        results["mcp_import_error"] = str(e)
+    
+    return results
+
+@api_router.get("/network-test")
 async def network_test():
     """Test network connectivity to Semgrep API."""
     import httpx
@@ -134,7 +178,7 @@ async def network_test():
             "error": str(e)
         }
 
-@app.get("/semgrep-test")
+@api_router.get("/semgrep-test")
 async def semgrep_test():
     """Test if semgrep CLI can be installed and run."""
     import subprocess
@@ -182,9 +226,14 @@ async def semgrep_test():
             "error": str(e)
         }
 
-# Mount static files for frontend
-if os.path.exists("static"):
+# Mount API router FIRST - this ensures API routes have priority
+app.include_router(api_router, prefix="/api")
+
+# Mount static files at root - StaticFiles will only handle file requests, not API
+try:
     app.mount("/", StaticFiles(directory="static", html=True), name="static")
+except RuntimeError:
+    pass  # static directory doesn't exist, skip mounting
 
 
 if __name__ == "__main__":

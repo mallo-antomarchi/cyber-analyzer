@@ -15,8 +15,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv for Python package management
-RUN pip install uv
+# Install uv for Python package management using official installer
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
 # Copy Python dependencies and install
 COPY backend/pyproject.toml backend/uv.lock* ./

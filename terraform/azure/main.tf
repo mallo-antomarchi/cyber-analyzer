@@ -64,7 +64,7 @@ provider "docker" {
   }
 }
 
-# Build and push Docker image
+# Build Docker image
 resource "docker_image" "app" {
   name = "${azurerm_container_registry.acr.login_server}/${var.project_name}:${var.docker_image_tag}"
   
@@ -72,13 +72,24 @@ resource "docker_image" "app" {
     context    = "${path.module}/../.."
     dockerfile = "Dockerfile"
     platform   = "linux/amd64"
-    no_cache   = true
   }
+  
+  keep_locally = false  # This triggers the push after build
 }
 
-resource "docker_registry_image" "app" {
-  name = docker_image.app.name
-  
+# Use null_resource as a more reliable alternative for pushing
+resource "null_resource" "docker_push" {
+  triggers = {
+    image_id = docker_image.app.image_id
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "${azurerm_container_registry.acr.admin_password}" | docker login ${azurerm_container_registry.acr.login_server} -u ${azurerm_container_registry.acr.admin_username} --password-stdin
+      docker push ${docker_image.app.name}
+    EOT
+  }
+
   depends_on = [docker_image.app]
 }
 
@@ -115,11 +126,13 @@ resource "azurerm_container_app" "main" {
   container_app_environment_id = azurerm_container_app_environment.main.id
   resource_group_name          = data.azurerm_resource_group.main.name
   revision_mode                = "Single"
+  
+  depends_on = [null_resource.docker_push]
 
   template {
     container {
       name   = "main"
-      image  = docker_registry_image.app.name
+      image  = docker_image.app.name
       cpu    = 1.0
       memory = "2.0Gi"
 
